@@ -1,4 +1,4 @@
-import requests, random
+import requests
 import tkinter as tk
 
 WEB = "https://raw.githubusercontent.com/dwyl/english-words/master/words_dictionary.json"
@@ -11,18 +11,19 @@ class GUI:
         self.window = tk.Tk()
         self.words = words
         self.inex = {"Include": tk.StringVar(), "Exclude": tk.StringVar()}
+        self.fixed_letters = [tk.StringVar() for _ in range(LETTERS)]
 
         self.window.geometry('800x500')
         self.window.title("Wordle Helper")
 
         self.letters = tk.Frame(self.window)
-        self.letters_entries = [0] * LETTERS
+        self.letters_entries = [0 for _ in range(LETTERS)]
         for i in range(LETTERS):
-            self.letters_entries[i] = tk.Entry(self.letters, borderwidth=5, width=3)
+            self.letters_entries[i] = tk.Entry(self.letters, borderwidth=5, width=3, textvariable=self.fixed_letters[i])
             self.letters_entries[i].grid(row=0, column=i)
+        self.btn_reset = tk.Button(self.letters, text="Reset", command=self.reset_letters)
+        self.btn_reset.grid(row=0, column=LETTERS)
 
-
-        self.btn_return = tk.Button(self.window, text="Enter")
         
         self.generate = tk.Frame(self.window)
         self.generate_comps = {"Include": [0, 0], "Exclude": [0, 0]}
@@ -33,7 +34,6 @@ class GUI:
         
         self.btn_search = tk.Button(self.window, text="Search", command=self.search)
         self.letters.pack()
-        self.btn_return.pack()
         self.generate.pack()
         self.btn_search.pack()
 
@@ -48,6 +48,13 @@ class GUI:
         self.window.mainloop()
 
     def search(self):
+        def check_fixed(known, word):
+            for i in range(LETTERS):
+                if known[i]:
+                    if known[i][0] != word[i]:
+                        return False
+            return True
+        
         def check_exclude(list, word):
             for char in list:
                 if char in word:
@@ -63,16 +70,22 @@ class GUI:
         self.message.config(state=tk.NORMAL)
         self.message.delete(1.0, tk.END)
         
-        
-        include = set(self.inex["Include"].get())
+        known = [letter.get().strip() for letter in self.fixed_letters]
+        print(known)
+        include = set(list(self.inex["Include"].get()) + known)
         exclude = set(self.inex["Exclude"].get())
         
         string = ''
         for word in self.words:
-            if check_exclude(exclude, word) and check_include(include, word):
-                string += word + '\n'
+            if check_fixed(known, word):
+                if check_exclude(exclude, word) and check_include(include, word):
+                    string += word + '\n'
         self.message.insert(tk.END, string)
         self.message.config(state=tk.DISABLED)
+
+    def reset_letters(self):
+        for letters in self.fixed_letters:
+            letters.set('')
 
 
 def write_file():
