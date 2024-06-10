@@ -1,4 +1,4 @@
-import requests
+import random, requests
 import tkinter as tk
 
 WEB = "https://raw.githubusercontent.com/dwyl/english-words/master/words_dictionary.json"
@@ -33,9 +33,11 @@ class GUI:
                 self.generate_comps[key][j].grid(row=i, column=j)
         
         self.btn_search = tk.Button(self.window, text="Search", command=self.search)
+        self.btn_random = tk.Button(self.window, text="Randomize", command=self.randomize)
         self.letters.pack()
         self.generate.pack()
         self.btn_search.pack()
+        self.btn_random.pack()
 
         self.message = tk.Text(self.window, width=500, state=tk.DISABLED)
 
@@ -67,11 +69,7 @@ class GUI:
                     return False
             return True
         
-        self.message.config(state=tk.NORMAL)
-        self.message.delete(1.0, tk.END)
-        
         known = [letter.get().strip() for letter in self.fixed_letters]
-        print(known)
         include = set(list(self.inex["Include"].get()) + known)
         exclude = set(self.inex["Exclude"].get())
         
@@ -79,13 +77,28 @@ class GUI:
         for word in self.words:
             if check_fixed(known, word):
                 if check_exclude(exclude, word) and check_include(include, word):
-                    string += word + '\n'
+                    string += word + '\n'        
+        self.reset_output()
+        self.show_output(string)
+
+    def reset_output(self):
+        self.message.config(state=tk.NORMAL)
+        self.message.delete(1.0, tk.END)
+        self.message.config(state=tk.DISABLED)
+
+    def show_output(self, string):
+        self.message.config(state=tk.NORMAL)
         self.message.insert(tk.END, string)
         self.message.config(state=tk.DISABLED)
 
     def reset_letters(self):
         for letters in self.fixed_letters:
             letters.set('')
+
+    def randomize(self):
+        self.reset_output()
+        random_choice = random.choice(list(self.words.keys()))
+        self.show_output(random_choice)
 
 
 def write_file():
